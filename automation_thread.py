@@ -135,20 +135,23 @@ class AutomationThread(QThread):
 
                 # ---- 核心流程 ----
 
+                # 初始化诊断计数器（确保在循环开始前存在）
+                if not hasattr(self, '_screenshot_warn_count'):
+                    self._screenshot_warn_count = 0
+                if not hasattr(self, '_diag_counter'):
+                    self._diag_counter = 0
+
                 # 1. 请求主线程截图（关键：不在本线程调用 grab()）
                 screenshot_cv2 = self._capture_screenshot_cross_thread()
                 if screenshot_cv2 is None:
-                    # 只在首次失败时输出警告，避免日志刷屏
-                    if not hasattr(self, '_screenshot_warn_count'):
-                        self._screenshot_warn_count = 0
                     self._screenshot_warn_count += 1
                     if self._screenshot_warn_count <= 3:
                         self._emit_log(f"截图未就绪，等待中... ({self._screenshot_warn_count})")
                     time.sleep(self.click_interval)
                     continue
 
-                if self._screenshot_warn_count and self._screenshot_warn_count > 3:
-                    self._emit_log(f"截图已恢复正常")
+                if self._screenshot_warn_count > 0:
+                    self._emit_log("截图已恢复正常")
                     self._screenshot_warn_count = 0
 
                 # 2. 初始化 Canvas 缩放比例（首次）
@@ -159,8 +162,6 @@ class AutomationThread(QThread):
                 match_results = self._run_all_matching(screenshot_cv2)
 
                 # 3b. 诊断输出：每 10 次循环输出一次匹配摘要
-                if not hasattr(self, '_diag_counter'):
-                    self._diag_counter = 0
                 self._diag_counter += 1
                 if self._diag_counter % 10 == 1:
                     found_list = [f"{k}({v.confidence:.2f})" 
