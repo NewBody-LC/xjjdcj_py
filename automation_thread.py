@@ -50,6 +50,9 @@ class AutomationThread(QThread):
         super().__init__(parent)
         self.web_view = web_view
 
+        # 在主线程中缓存窗口句柄（避免后台线程访问 Qt GUI 对象导致跨线程崩溃）
+        self._webview_hwnd = int(web_view.winId()) if web_view else 0
+
         # 核心组件
         self.matcher = TemplateMatcher()
         self.state_machine = GameStateMachine()
@@ -275,67 +278,15 @@ class AutomationThread(QThread):
     # ---------- 点击操作 ----------
 
     def _init_canvas_scale(self):
-        """获取 Canvas 缩放比（JS 调用是线程安全的）
+        """获取 Canvas 缩放比（使用默认值 1.0）
         
-        游戏的 Canvas 内部分辨率可能与 CSS 显示尺寸不同，
-        需要获取缩放比以便正确转换点击坐标。
-        如果获取失败则使用默认值 1.0（对 1280x720 固定窗口通常没问题）。
+        1280x720 固定窗口不需要动态计算缩放比，
+        且从后台线程调用 page.runJavaScript 不够可靠。
         """
-        js_code = """
-        (function() {
-            var canvases = document.querySelectorAll('canvas');
-            if (canvases.length === 0) return {error: 'no_canvas'};
-            var c = canvases[0];
-            var r = c.getBoundingClientRect();
-            if (!r || r.width === 0) return {error: 'invalid_rect'};
-            return {
-                cw: c.width,
-                ch: c.height,
-                rw: Math.round(r.width),
-                rh: Math.round(r.height),
-                sx: c.width / r.width,
-                sy: c.height / r.height
-            };
-        })()
-        """
-
-        try:
-            page = self.web_view.page()
-
-            result_container = [None]
-            callback_fired = [False]
-
-            def on_result(r):
-                result_container[0] = r
-                callback_fired[0] = True
-
-            page.runJavaScript(js_code, on_result)
-
-            # 等待回调（最多 2 秒）
-            for _ in range(20):
-                if callback_fired[0]:
-                    break
-                time.sleep(0.1)
-
-            info = result_container[0]
-            
-            if isinstance(info, dict) and info and 'error' not in info:
-                self._canvas_scale_x = float(info.get('sx', 1.0))
-                self._canvas_scale_y = float(info.get('sy', 1.0))
-                self._scale_initialized = True
-                self._emit_log(
-                    f"Canvas 缩放比: X={self._canvas_scale_x:.2f}, Y={self._canvas_scale_y:.2f} "
-                    f"(内部{info.get('cw')}x{info.get('ch')}, 显示{info.get('rw')}x{info.get('rh')})"
-                )
-            else:
-                reason = str(info) if info else "无返回"
-                self._scale_initialized = True
-                self._emit_log(f"Canvas 信息获取不完整({reason})，使用默认缩放比 1.0")
-                self._emit_log("提示：如果点击位置不准确，请检查模板匹配是否正常工作")
-
-        except Exception as e:
-            self._emit_log(f"初始化 Canvas 缩放比失败: {e}")
-            self._scale_initialized = True
+        self._scale_initialized = True
+        self._canvas_scale_x = 1.0
+        self._canvas_scale_y = 1.0
+        self._emit_log("Canvas 缩放比: 使用默认值 1.0 (1280x720 固定窗口)")
 
     def _click_at(self, screen_x: int, screen_y: int):
         """在指定坐标点击（优先用 Win32 API，JS 作为补充）"""
@@ -351,25 +302,25 @@ class AutomationThread(QThread):
         self._click_via_js(screen_x, screen_y)
 
     def _click_via_win32(self, x: int, y: int) -> bool:
-        """使用 Win32 API 模拟物理鼠标点击（最可靠的方式）"""
+        """使用 Win32 API 模拟物理鼠标点击（纯 Win32，不触碰 Qt GUI 对象）"""
         try:
             import ctypes
             from ctypes import wintypes
 
-            qwindow = self.web_view.windowHandle()
-            if qwindow:
-                global_pos = qwindow.mapToGlobal(__import__('PyQt5.QtCore').QPoint(x, y))
-                abs_x = global_pos.x()
-                abs_y = global_pos.y()
-            else:
-                user32 = ctypes.windll.user32
-                rect = wintypes.RECT()
-                user32.GetWindowRect(self.web_view.winId(), ctypes.byref(rect))
-                abs_x = rect.left + x
-                abs_y = rect.top + y
+            user32 = ctypes.windll.user32
+            hwnd = self._webview_hwnd
+
+            if hwnd == 0:
+                self._emit_log("Win32 点击失败：无效的窗口句柄")
+                return False
+
+            # 纯 Win32 API 获取窗口屏幕坐标
+            rect = wintypes.RECT()
+            user32.GetWindowRect(hwnd, ctypes.byref(rect))
+            abs_x = rect.left + x
+            abs_y = rect.top + y
 
             # 设置鼠标位置并点击
-            user32 = ctypes.windll.user32
             user32.SetCursorPos(abs_x, abs_y)
             time.sleep(0.03)
             user32.mouse_event(0x0002, 0, 0, 0, 0)  # MOUSEEVENTF_LEFTDOWN
@@ -386,25 +337,9 @@ class AutomationThread(QThread):
             return False
 
     def _click_via_js(self, x: int, y: int) -> bool:
-        """通过 JS 注入鼠标事件到 Canvas（备选方案）"""
-        js_code = f"""(function(){{
-            var c=document.querySelector('canvas');if(!c){{console.error('[点击JS] 无canvas');return false;}}
-            var r=c.getBoundingClientRect();
-            var px=r.left+{x}, py=r.top+{y};
-            function ev(t,b){{return new MouseEvent(t,{{bubbles:true,cancelable:true,
-              clientX:px,clientY:py,button:0,buttons:b?1:0}});}}
-            try{{c.dispatchEvent(ev('mousedown'));}}catch(e){{console.error('[点击JS] mousedown:',e.message);}}
-            try{{c.dispatchEvent(ev('mouseup'));}}catch(e){{console.error('[点击JS] mouseup:',e.message);}}
-            try{{c.dispatchEvent(ev('click'));}}catch(e){{console.error('[点击JS] click:',e.message);}}
-            console.log('[点击JS] 已发送点击:', x, y, '->', px, py);
-            return true;
-        }})()"""
-        try:
-            self.web_view.page().runJavaScript(js_code)
-            return True
-        except Exception as e:
-            self._emit_log(f"JS 点击注入失败: {e}")
-            return False
+        """通过 JS 注入鼠标事件到 Canvas（已禁用 - 避免跨线程访问 Qt GUI 对象）"""
+        self._emit_log("JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用")
+        return False
 
     # ---------- 控制方法 ----------
 
