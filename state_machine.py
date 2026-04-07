@@ -110,7 +110,7 @@ class GameStateMachine:
         self.current_state = new_state
         self._state_entry_time = time.time()
         if old_state != new_state:
-            self._log(f"状态: {old_state} → {new_state}")
+            self._log(f"状态: {old_state.value} → {new_state.value}")
 
     def update(self,
                screenshot=None,
@@ -160,17 +160,18 @@ class GameStateMachine:
         return self.current_state, Action(Action.WAIT, description="等待进入地图界面...")
 
     def _handle_on_map(self, match_results, fixed_clicks, threshold):
-        """在地图上：查找并点击可探索节点（从上到下、从左到右）
+        """在地图上：查找并点击可探索节点
         
         节点选择策略：
-        1. 按颜色优先级遍历（黄 > 红 > 蓝 > 绿 > 紫）
-        2. 同色节点按 Y 坐标升序（从上到下），Y 相同则按 X 升序（从左到右）
+        1. 先按 X 坐标升序（从左到右）
+        2. X 相同则按 Y 坐标升序（从上到下）
         3. 每次只点击一个节点，下次循环继续下一个
+        4. 已点击过的节点不会重复点击
         """
-        # 节点颜色优先级顺序
+        # 所有节点颜色
         node_colors = ["node_yellow", "node_red", "node_blue", "node_green", "node_purple"]
 
-        # 收集所有找到的节点，按颜色优先级和位置排序
+        # 收集所有找到的节点
         all_candidates = []  # [(color_name, x, y, confidence), ...]
 
         for color in node_colors:
@@ -195,10 +196,10 @@ class GameStateMachine:
 
             return self.current_state, Action(Action.WAIT, description="在地图上，未找到可点击节点")
 
-        # 排序：Y 升序（从上到下）→ X 升序（从左到右）
+        # 排序：X 升序（从左到右）优先，X 相同则 Y 升序（从上到下）
         def sort_key(item):
             _, x, y, _ = item
-            return (y, x)  # 先比 Y（上到下），再比 X（左到右）
+            return (x, y)
 
         all_candidates.sort(key=sort_key)
 

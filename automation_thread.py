@@ -185,7 +185,7 @@ class AutomationThread(QThread):
 
                 old_name = self.state_machine.previous_state.name if self.state_machine.previous_state else ""
                 if new_state.name != old_name:
-                    self.state_changed.emit(new_state.name)
+                    self.state_changed.emit(new_state.value)
 
                 # 5. 执行动作
                 if action.action_type in (Action.CLICK_COORD, Action.CLICK_NEAREST_NODE):
@@ -338,23 +338,67 @@ class AutomationThread(QThread):
             self._scale_initialized = True
 
     def _click_at(self, screen_x: int, screen_y: int):
-        """在指定坐标点击"""
-        canvas_x = int(screen_x * self._canvas_scale_x)
-        canvas_y = int(screen_y * self._canvas_scale_y)
-        self._emit_log(f"点击: 屏幕({screen_x},{screen_y}) → Canvas({canvas_x},{canvas_y})")
-        self._click_via_js(canvas_x, canvas_y)
+        """在指定坐标点击（优先用 Win32 API，JS 作为补充）"""
+        # 直接使用屏幕坐标（1280x720 窗口坐标），不转换 Canvas 内部坐标
+        self._emit_log(f"点击: 屏幕({screen_x},{screen_y})")
+        
+        # 方式1：Win32 API 物理点击（最可靠）
+        success = self._click_via_win32(screen_x, screen_y)
+        if success:
+            return
 
-    def _click_via_js(self, canvas_x: int, canvas_y: int) -> bool:
-        """通过 JS 注入鼠标事件"""
-        sx, sy = self._canvas_scale_x, self._canvas_scale_y
+        # 方式2：JS 注入点击事件（备选）
+        self._click_via_js(screen_x, screen_y)
+
+    def _click_via_win32(self, x: int, y: int) -> bool:
+        """使用 Win32 API 模拟物理鼠标点击（最可靠的方式）"""
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            qwindow = self.web_view.windowHandle()
+            if qwindow:
+                global_pos = qwindow.mapToGlobal(__import__('PyQt5.QtCore').QPoint(x, y))
+                abs_x = global_pos.x()
+                abs_y = global_pos.y()
+            else:
+                user32 = ctypes.windll.user32
+                rect = wintypes.RECT()
+                user32.GetWindowRect(self.web_view.winId(), ctypes.byref(rect))
+                abs_x = rect.left + x
+                abs_y = rect.top + y
+
+            # 设置鼠标位置并点击
+            user32 = ctypes.windll.user32
+            user32.SetCursorPos(abs_x, abs_y)
+            time.sleep(0.03)
+            user32.mouse_event(0x0002, 0, 0, 0, 0)  # MOUSEEVENTF_LEFTDOWN
+            time.sleep(0.03)
+            user32.mouse_event(0x0004, 0, 0, 0, 0)  # MOUSEEVENTF_LEFTUP
+
+            return True
+
+        except ImportError:
+            self._emit_log("Win32 API 不可用（非 Windows 平台）")
+            return False
+        except Exception as e:
+            self._emit_log(f"Win32 点击异常: {e}")
+            return False
+
+    def _click_via_js(self, x: int, y: int) -> bool:
+        """通过 JS 注入鼠标事件到 Canvas（备选方案）"""
         js_code = f"""(function(){{
-            var c=document.querySelector('canvas');if(!c)return false;
+            var c=document.querySelector('canvas');if(!c){{console.error('[点击JS] 无canvas');return false;}}
             var r=c.getBoundingClientRect();
-            function ev(t){{return new MouseEvent(t,{{bubbles:true,cancelable:true,
-              clientX:r.left+{canvas_x}/{sx},clientY:r.top+{canvas_y}/{sy},
-              button:0,buttons:t==='mousedown'?1:0}});}}
-            c.dispatchEvent(ev('mousedown'));c.dispatchEvent(ev('mouseup'));c.dispatchEvent(ev('click'));
-            return true;}})()"""
+            var px=r.left+{x}, py=r.top+{y};
+            function ev(t,b){{return new MouseEvent(t,{{bubbles:true,cancelable:true,
+              clientX:px,clientY:py,button:0,buttons:b?1:0}});}}
+            try{{c.dispatchEvent(ev('mousedown'));}}catch(e){{console.error('[点击JS] mousedown:',e.message);}}
+            try{{c.dispatchEvent(ev('mouseup'));}}catch(e){{console.error('[点击JS] mouseup:',e.message);}}
+            try{{c.dispatchEvent(ev('click'));}}catch(e){{console.error('[点击JS] click:',e.message);}}
+            console.log('[点击JS] 已发送点击:', x, y, '->', px, py);
+            return true;
+        }})()"""
         try:
             self.web_view.page().runJavaScript(js_code)
             return True
