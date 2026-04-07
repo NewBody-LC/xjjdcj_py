@@ -1,13 +1,30 @@
 [主窗口] 自动化线程已启动
-[23:44:09] 状态机已重置
-[23:44:09] 状态转换: IDLE -> DETECTING_MAP
-[23:44:09] === 自动化已启动 ===
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[ERROR] 自动化循环异常: 'AutomationThread' object has no attribute '_screenshot_warn_count'
-[23:44:16] 状态转换: DETECTING_MAP -> STOPPED
-[23:44:16] === 自动化已停止 ===
+[23:53:20] 状态机已重置
+[23:53:20] 状态转换: IDLE -> DETECTING_MAP
+[23:53:20] === 自动化已启动 ===
+Canvas 信息获取不完整({'error': 'no_canvas'})，使用默认缩放比 1.0
+提示：如果点击位置不准确，请检查模板匹配是否正常工作
+[诊断] 匹配到: map_screen(0.98), node_yellow(0.77), node_blue(0.75) | 未匹配: in_battle, victory, defeat, node_red, node_green, node_purple
+[23:53:21] === 第 1 轮循环开始 ===
+[23:53:21] 状态转换: DETECTING_MAP -> ON_MAP
+[23:53:21] 点击 node_yellow 节点 (974,151) 置信度=0.77
+点击: 屏幕(974,151) → Canvas(974,151)
+[动作] 点击 node_yellow 节点 (974,151) 置信度=0.77
+[23:53:23] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:25] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:26] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:28] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:30] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:32] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:33] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:35] 点击 node_purple 节点 (1163,340) 置信度=0.88
+点击: 屏幕(1163,340) → Canvas(1163,340)
+[23:53:36] 状态转换: ON_MAP -> PAUSED
+[23:53:36] === 自动化已暂停 ===

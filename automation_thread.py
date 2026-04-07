@@ -164,10 +164,10 @@ class AutomationThread(QThread):
                 # 3b. 诊断输出：每 10 次循环输出一次匹配摘要
                 self._diag_counter += 1
                 if self._diag_counter % 10 == 1:
-                    found_list = [f"{k}({v.confidence:.2f})" 
+                    found_list = [f"[{k}]({v.confidence:.0%})" 
                                   for k, v in match_results.items() if v and v.found]
                     not_found = [k for k, v in match_results.items() if v and not v.found]
-                    summary = f"[诊断] 匹配到: {', '.join(found_list) if found_list else '无'}"
+                    summary = f"[诊断] 已匹配: {', '.join(found_list) if found_list else '无'}"
                     if not_found:
                         summary += f" | 未匹配: {', '.join(not_found)}"
                     self._emit_log(summary)

@@ -12,14 +12,14 @@ from dataclasses import dataclass
 
 
 class State(Enum):
-    """游戏自动化状态枚举"""
-    IDLE = auto()               # 空闲/未启动
-    DETECTING_MAP = auto()      # 正在检测是否进入地图界面
-    ON_MAP = auto()             # 在地图上，需要选择节点
-    IN_BATTLE = auto()          # 战斗中，需点击自动战斗
-    BATTLE_RESULT = auto()      # 战斗结算（胜利/失败），需选择选项
-    PAUSED = auto()             # 已暂停
-    STOPPED = auto()            # 已停止
+    """游戏自动化状态枚举（中文名称用于日志显示）"""
+    IDLE = "空闲"               # 空闲/未启动
+    DETECTING_MAP = "检测地图"      # 正在检测是否进入地图界面
+    ON_MAP = "在地图上"             # 在地图上，需要选择节点
+    IN_BATTLE = "战斗中"           # 战斗中，需点击自动战斗
+    BATTLE_RESULT = "结算界面"     # 战斗结算（胜利/失败），需选择选项
+    PAUSED = "已暂停"             # 已暂停
+    STOPPED = "已停止"            # 已停止
 
 
 @dataclass
@@ -54,6 +54,7 @@ class GameStateMachine:
         self.current_state = State.IDLE
         self.previous_state: Optional[State] = None
         self.last_click_pos: Optional[Tuple[int, int]] = None  # 上次点击位置，用于计算最近节点
+        self._clicked_positions = set()  # 本轮已点击过的位置集合，避免重复点击
         self.loop_count: int = 0  # 完成的循环次数
         self._state_entry_time: float = 0  # 进入当前状态的时间
         self._log_callback = None  # 日志回调函数
@@ -75,6 +76,7 @@ class GameStateMachine:
         self.current_state = State.IDLE
         self.previous_state = None
         self.last_click_pos = None
+        self._clicked_positions.clear()
         self.loop_count = 0
         self._log("状态机已重置")
 
@@ -108,7 +110,7 @@ class GameStateMachine:
         self.current_state = new_state
         self._state_entry_time = time.time()
         if old_state != new_state:
-            self._log(f"状态转换: {old_state.name} -> {new_state.name}")
+            self._log(f"状态: {old_state} → {new_state}")
 
     def update(self,
                screenshot=None,
@@ -150,70 +152,88 @@ class GameStateMachine:
         
         if map_result and map_result.found:
             self.loop_count += 1
-            self._log(f"=== 第 {self.loop_count} 轮循环开始 ===")
+            self._log(f"=== 第 {self.loop_count} 轮循环 ===")
+            self._clicked_positions.clear()  # 新一轮循环，清空已点击记录
             self._transition_to(State.ON_MAP)
             return self._handle_on_map(match_results, fixed_clicks, threshold)
         
-        return self.current_state, Action(Action.WAIT, description="等待地图界面...")
+        return self.current_state, Action(Action.WAIT, description="等待进入地图界面...")
 
     def _handle_on_map(self, match_results, fixed_clicks, threshold):
-        """在地图上：查找并点击最近的可探索节点"""
+        """在地图上：查找并点击可探索节点（从上到下、从左到右）
+        
+        节点选择策略：
+        1. 按颜色优先级遍历（黄 > 红 > 蓝 > 绿 > 紫）
+        2. 同色节点按 Y 坐标升序（从上到下），Y 相同则按 X 升序（从左到右）
+        3. 每次只点击一个节点，下次循环继续下一个
+        """
+        # 节点颜色优先级顺序
         node_colors = ["node_yellow", "node_red", "node_blue", "node_green", "node_purple"]
-        
-        best_match = None
-        best_node_name = None
-        
+
+        # 收集所有找到的节点，按颜色优先级和位置排序
+        all_candidates = []  # [(color_name, x, y, confidence), ...]
+
         for color in node_colors:
             result = match_results.get(color)
             if result and result.found and result.all_positions and len(result.all_positions) > 0:
-                # 找到距离上次点击位置最近的节点
-                nearest = self._find_nearest_position(
-                    result.all_positions, 
-                    self.last_click_pos
-                )
-                if nearest:
-                    conf = nearest[2]
-                    if best_match is None or conf > best_match[2]:
-                        best_match = nearest
-                        best_node_name = color
+                for pos in result.all_positions:  # pos = (x, y, conf)
+                    x, y, conf = pos
+                    all_candidates.append((color, x, y, conf))
 
-        if best_match:
-            x, y, conf = best_match
-            self.last_click_pos = (x, y)
-            # 检查是否同时匹配到了战斗界面（说明点击后直接进入了战斗）
-            battle_result = match_results.get("in_battle")
-            if battle_result and battle_result.found:
+        if not all_candidates:
+            # 没有找到任何节点，检查是否已进入战斗/结算
+            battle = match_results.get("in_battle")
+            if battle and battle.found:
                 self._transition_to(State.IN_BATTLE)
-                action = Action(
-                    Action.CLICK_NEAREST_NODE,
-                    target=best_node_name,
-                    position=(x, y),
-                    description=f"点击 {best_node_name} 节点 ({x},{y}) 置信度={conf:.2f}"
-                )
-            else:
-                # 正常情况：先点击节点，下个周期再检测是否进入战斗
-                action = Action(
-                    Action.CLICK_NEAREST_NODE,
-                    target=best_node_name,
-                    position=(x, y),
-                    description=f"点击 {best_node_name} 节点 ({x},{y}) 置信度={conf:.2f}"
-                )
-            self._log(action.description)
-            return self.current_state, action
+                return self._handle_in_battle(match_results, fixed_clicks, threshold)
 
-        # 没有找到节点，检查是否已经进入战斗或结算
-        battle = match_results.get("in_battle")
-        if battle and battle.found:
+            victory = match_results.get("victory")
+            defeat = match_results.get("defeat")
+            if (victory and victory.found) or (defeat and defeat.found):
+                self._transition_to(State.BATTLE_RESULT)
+                return self._handle_battle_result(match_results, fixed_clicks, threshold)
+
+            return self.current_state, Action(Action.WAIT, description="在地图上，未找到可点击节点")
+
+        # 排序：Y 升序（从上到下）→ X 升序（从左到右）
+        def sort_key(item):
+            _, x, y, _ = item
+            return (y, x)  # 先比 Y（上到下），再比 X（左到右）
+
+        all_candidates.sort(key=sort_key)
+
+        # 选择排序后的第一个节点（跳过已点击的位置）
+        best_color, best_x, best_y, best_conf = None, None, None, None
+        for candidate in all_candidates:
+            color, x, y, conf = candidate
+            pos_key = (x // 20, y // 20)  # 粗粒度去重（允许一定误差）
+            if pos_key not in self._clicked_positions:
+                best_color, best_x, best_y, best_conf = color, x, y, conf
+                break
+
+        if best_x is None:
+            # 所有节点都已点击过，重置并重新开始
+            self._clicked_positions.clear()
+            self._log("所有已知节点已点击，重置节点列表")
+            return self.current_state, Action(Action.WAIT, description="等待新周期...")
+        
+        self.last_click_pos = (best_x, best_y)
+        # 记录已点击位置（粗粒度去重）
+        self._clicked_positions.add((best_x // 20, best_y // 20))
+
+        # 检查是否同时匹配到了战斗界面
+        battle_result = match_results.get("in_battle")
+        if battle_result and battle_result.found:
             self._transition_to(State.IN_BATTLE)
-            return self._handle_in_battle(match_results, fixed_clicks, threshold)
 
-        victory = match_results.get("victory")
-        defeat = match_results.get("defeat")
-        if (victory and victory.found) or (defeat and defeat.found):
-            self._transition_to(State.BATTLE_RESULT)
-            return self._handle_battle_result(match_results, fixed_clicks, threshold)
-
-        return self.current_state, Action(Action.WAIT, description="在地图上，未找到可点击节点")
+        action = Action(
+            Action.CLICK_NEAREST_NODE,
+            target=best_color,
+            position=(best_x, best_y),
+            description=f"点击 [{best_color}] 节点 ({best_x},{best_y}) 置信度={best_conf:.0%}"
+        )
+        self._log(action.description)
+        return self.current_state, action
 
     def _handle_in_battle(self, match_results, fixed_clicks, threshold):
         """战斗中：点击自动战斗按钮，然后等待结算"""
