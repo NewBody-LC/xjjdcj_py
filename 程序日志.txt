@@ -1,11 +1,5 @@
-[23:03:24] === 自动化已启动 ===
+[主窗口] 自动化线程已启动
+[23:18:57] 状态机已重置
+[23:18:57] 状态转换: IDLE -> DETECTING_MAP
+[23:18:57] === 自动化已启动 ===
 无法获取 Canvas 信息，使用默认缩放比 1.0
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
-[23:03:50] 状态转换: DETECTING_MAP -> STOPPED
-[23:03:50] === 自动化已停止 ===
-=== 自动化线程已结束 ===

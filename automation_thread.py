@@ -138,8 +138,18 @@ class AutomationThread(QThread):
                 # 1. 请求主线程截图（关键：不在本线程调用 grab()）
                 screenshot_cv2 = self._capture_screenshot_cross_thread()
                 if screenshot_cv2 is None:
+                    # 只在首次失败时输出警告，避免日志刷屏
+                    if not hasattr(self, '_screenshot_warn_count'):
+                        self._screenshot_warn_count = 0
+                    self._screenshot_warn_count += 1
+                    if self._screenshot_warn_count <= 3:
+                        self._emit_log(f"截图未就绪，等待中... ({self._screenshot_warn_count})")
                     time.sleep(self.click_interval)
                     continue
+
+                if self._screenshot_warn_count and self._screenshot_warn_count > 3:
+                    self._emit_log(f"截图已恢复正常")
+                    self._screenshot_warn_count = 0
 
                 # 2. 初始化 Canvas 缩放比例（首次）
                 if not self._scale_initialized:
@@ -147,6 +157,19 @@ class AutomationThread(QThread):
 
                 # 3. 批量模板匹配
                 match_results = self._run_all_matching(screenshot_cv2)
+
+                # 3b. 诊断输出：每 10 次循环输出一次匹配摘要
+                if not hasattr(self, '_diag_counter'):
+                    self._diag_counter = 0
+                self._diag_counter += 1
+                if self._diag_counter % 10 == 1:
+                    found_list = [f"{k}({v.confidence:.2f})" 
+                                  for k, v in match_results.items() if v and v.found]
+                    not_found = [k for k, v in match_results.items() if v and not v.found]
+                    summary = f"[诊断] 匹配到: {', '.join(found_list) if found_list else '无'}"
+                    if not_found:
+                        summary += f" | 未匹配: {', '.join(not_found)}"
+                    self._emit_log(summary)
 
                 # 4. 状态机决策
                 config_for_sm = {
@@ -167,6 +190,9 @@ class AutomationThread(QThread):
                 if action.action_type in (Action.CLICK_COORD, Action.CLICK_NEAREST_NODE):
                     x, y = action.position
                     self._click_at(x, y)
+
+                if self._diag_counter % 10 == 1 and action and hasattr(action, 'description') and action.description:
+                    self._emit_log(f"[动作] {action.description}")
 
                 time.sleep(self.click_interval)
 
@@ -248,14 +274,27 @@ class AutomationThread(QThread):
     # ---------- 点击操作 ----------
 
     def _init_canvas_scale(self):
-        """获取 Canvas 缩放比（JS 调用是线程安全的）"""
+        """获取 Canvas 缩放比（JS 调用是线程安全的）
+        
+        游戏的 Canvas 内部分辨率可能与 CSS 显示尺寸不同，
+        需要获取缩放比以便正确转换点击坐标。
+        如果获取失败则使用默认值 1.0（对 1280x720 固定窗口通常没问题）。
+        """
         js_code = """
         (function() {
-            var c = document.querySelector('canvas');
-            if (!c) return null;
+            var canvases = document.querySelectorAll('canvas');
+            if (canvases.length === 0) return {error: 'no_canvas'};
+            var c = canvases[0];
             var r = c.getBoundingClientRect();
-            return {cw: c.width, ch: h=c.height, rw: r.width, rh: r.height,
-                    sx: c.width/r.width, sy: c.height/r.height};
+            if (!r || r.width === 0) return {error: 'invalid_rect'};
+            return {
+                cw: c.width,
+                ch: c.height,
+                rw: Math.round(r.width),
+                rh: Math.round(r.height),
+                sx: c.width / r.width,
+                sy: c.height / r.height
+            };
         })()
         """
 
@@ -271,13 +310,15 @@ class AutomationThread(QThread):
 
             page.runJavaScript(js_code, on_result)
 
-            for _ in range(20):  # 等 2 秒
+            # 等待回调（最多 2 秒）
+            for _ in range(20):
                 if callback_fired[0]:
                     break
                 time.sleep(0.1)
 
             info = result_container[0]
-            if isinstance(info, dict) and info:
+            
+            if isinstance(info, dict) and info and 'error' not in info:
                 self._canvas_scale_x = float(info.get('sx', 1.0))
                 self._canvas_scale_y = float(info.get('sy', 1.0))
                 self._scale_initialized = True
@@ -286,8 +327,10 @@ class AutomationThread(QThread):
                     f"(内部{info.get('cw')}x{info.get('ch')}, 显示{info.get('rw')}x{info.get('rh')})"
                 )
             else:
+                reason = str(info) if info else "无返回"
                 self._scale_initialized = True
-                self._emit_log("无法获取 Canvas 信息，使用默认缩放比 1.0")
+                self._emit_log(f"Canvas 信息获取不完整({reason})，使用默认缩放比 1.0")
+                self._emit_log("提示：如果点击位置不准确，请检查模板匹配是否正常工作")
 
         except Exception as e:
             self._emit_log(f"初始化 Canvas 缩放比失败: {e}")
