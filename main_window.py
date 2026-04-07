@@ -122,6 +122,15 @@ class MainWindow(QMainWindow):
 
         browser_layout.addWidget(self.web_view, alignment=Qt.AlignCenter)
 
+        # 坐标拾取覆盖层（透明，仅在拾取模式下显示并拦截点击）
+        self._coord_overlay = QLabel(self.web_view)
+        self._coord_overlay.setFixedSize(1280, 720)
+        self._coord_overlay.setStyleSheet(
+            "background: transparent; border: 2px dashed #e6a700;"
+        )
+        self._coord_overlay.hide()
+        self._coord_overlay.setCursor(Qt.CrossCursor)
+
         # 浏览器状态栏（含坐标拾取提示）
         status_row = QHBoxLayout()
         self.lbl_browser_status = QLabel("浏览器: 未加载")
@@ -160,17 +169,41 @@ class MainWindow(QMainWindow):
             self.config_panel.coord_pick_toggled.connect(self.set_coord_pick_mode)
 
     def _setup_coord_picker(self):
-        """
-        设置坐标拾取模式
-        
-        当用户开启坐标拾取时，鼠标在浏览器上点击会显示当前坐标。
-        通过重写 mousePressEvent 实现。
-        需要在 ConfigPanel 中添加"拾取坐标"按钮来切换此模式。
-        """
+        """设置坐标拾取 - 使用覆盖层 + JS 注入双保险"""
+        # 覆盖层鼠标事件
+        self._coord_overlay.mouseMoveEvent = self._coord_mouse_move
+        self._coord_overlay.mousePressEvent = self._coord_mouse_press
+        self._coord_overlay.leaveEvent = self._coord_mouse_leave
 
-        # 给 QWebEngineView 安装事件过滤器来拦截鼠标点击
-        self.web_view.installEventFilter(self)
+    def _coord_mouse_move(self, event):
+        if not self._coord_pick_mode:
+            return
+        x, y = event.x(), event.y()
+        self.lbl_coords.setText(f"[坐标拾取] ({x}, {y})")
 
+    def _coord_mouse_press(self, event):
+        if not self._coord_pick_mode:
+            return
+        if event.button() == Qt.LeftButton:
+            x, y = event.x(), event.y()
+            self.lbl_coords.setText(f"已选择: ({x}, {y})")
+            self.config_panel.append_log(f"[坐标] 点击位置: ({x}, {y})")
+            
+            # 尝试填入聚焦的输入框
+            focused = QApplication.focusWidget()
+            if isinstance(focused, QLineEdit):
+                focused.setText(str(x))
+                next_w = focused.nextInFocusChain()
+                if isinstance(next_w, QLineEdit):
+                    next_w.setFocus()
+                    next_w.setText(str(y))
+                    self.config_panel.append_log(f"[坐标] 已自动填入: X={x}, Y={y}")
+
+    def _coord_mouse_leave(self, event):
+        if self._coord_pick_mode:
+            pass  # 保持最后显示的坐标
+
+    # 保留 eventFilter 作为 JS 坐标拾取的补充（当覆盖层不适用时）
     def eventFilter(self, obj, event):
         """事件过滤器 - 用于坐标拾取"""
         if self._coord_pick_mode and obj is self.web_view:
@@ -202,11 +235,40 @@ class MainWindow(QMainWindow):
         """切换坐标拾取模式"""
         self._coord_pick_mode = enabled
         if enabled:
+            # 显示透明覆盖层（拦截鼠标事件）
+            self._coord_overlay.show()
+            self._coord_overlay.raise_()
             self.lbl_browser_status.setText("[坐标拾取模式] 点击浏览器区域获取坐标")
-            self.web_view.setCursor(Qt.CrossCursor)
+            
+            # 同时注入 JS 监听器作为补充
+            self.web_view.page().runJavaScript(R"""(function(){
+                window.__coordPickHandler = function(e) {
+                    var x = Math.round(e.offsetX || e.layerX);
+                    var y = Math.round(e.offsetY || e.layerY);
+                    // 通过 title 传递给 Qt
+                    document.title = 'COORD:' + x + ',' + y;
+                };
+                if (!window.__coordPickInstalled) {
+                    document.addEventListener('mousemove', window.__coordPickHandler);
+                    document.addEventListener('click', function(e) {
+                        var x = Math.round(e.offsetX || e.layerX);
+                        var y = Math.round(e.offsetY || e.layerY);
+                        document.title = 'COORD_CLICK:' + x + ',' + y;
+                    });
+                    window.__coordPickInstalled = true;
+                }
+            })()""")
         else:
+            self._coord_overlay.hide()
             self.lbl_browser_status.setText("浏览器: 就绪")
-            self.web_view.setCursor(Qt.ArrowCursor)
+            self.lbl_coords.setText("")
+            # 移除 JS 监听器
+            self.web_view.page().runJavaScript("""(function(){
+                if (window.__coordPickHandler) {
+                    document.removeEventListener('mousemove', window.__coordPickHandler);
+                    window.__coordPickInstalled = false;
+                }
+            })()""")
 
     def _load_initial_config(self):
         """程序启动时加载配置并自动加载游戏 URL"""

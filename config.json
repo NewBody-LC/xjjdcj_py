@@ -12,7 +12,7 @@
         "node_purple": "templates\\purple.png",
         "node_red": "templates\\red.png",
         "node_yellow": "templates\\yellow.png",
-        "victory": "templates\\yeah.png"
+        "victory": "templates\\victory.png"
     },
     "fixed_clicks": {
         "auto_fight": [

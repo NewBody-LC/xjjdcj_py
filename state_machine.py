@@ -149,7 +149,7 @@ class GameStateMachine:
         map_result = match_results.get("map_screen")
         
         if map_result and map_result.found:
-            self._loop_count += 1
+            self.loop_count += 1
             self._log(f"=== 第 {self.loop_count} 轮循环开始 ===")
             self._transition_to(State.ON_MAP)
             return self._handle_on_map(match_results, fixed_clicks, threshold)

@@ -1,14 +1,11 @@
-[TemplateMatcher] 加载模板 'defeat': 154x33 from F:\code\xjjdcj_v2_cbc\templates\sbjs.png
-[TemplateMatcher] 加载模板 'in_battle': 45x46 from F:\code\xjjdcj_v2_cbc\templates\zdjmbs.png
-[TemplateMatcher] 加载模板 'map_screen': 240x49 from F:\code\xjjdcj_v2_cbc\templates\dtbs.png
-[TemplateMatcher] 加载模板 'node_blue': 90x50 from F:\code\xjjdcj_v2_cbc\templates\blue.png
-[TemplateMatcher] 加载模板 'node_green': 83x51 from F:\code\xjjdcj_v2_cbc\templates\green.png
-[TemplateMatcher] 加载模板 'node_purple': 85x51 from F:\code\xjjdcj_v2_cbc\templates\purple.png
-[TemplateMatcher] 加载模板 'node_red': 87x50 from F:\code\xjjdcj_v2_cbc\templates\red.png
-[TemplateMatcher] 加载模板 'node_yellow': 86x53 from F:\code\xjjdcj_v2_cbc\templates\yellow.png
-[TemplateMatcher] 加载模板 'victory': 240x53 from F:\code\xjjdcj_v2_cbc\templates\yeah.png
-[TemplateMatcher] 共加载 9/9 个模板
-[22:25:45] 状态机已重置
-[22:25:45] 状态转换: IDLE -> DETECTING_MAP
-[22:25:45] === 自动化已启动 ===
-Cannot make QOpenGLContext current in a different thread
+[23:03:24] === 自动化已启动 ===
+无法获取 Canvas 信息，使用默认缩放比 1.0
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[ERROR] 自动化循环异常: 'GameStateMachine' object has no attribute '_loop_count'
+[23:03:50] 状态转换: DETECTING_MAP -> STOPPED
+[23:03:50] === 自动化已停止 ===
+=== 自动化线程已结束 ===
