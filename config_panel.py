@@ -247,6 +247,7 @@ class ConfigPanel(QWidget):
     start_requested = pyqtSignal()
     stop_requested = pyqtSignal()
     pause_requested = pyqtSignal()
+    coord_pick_toggled = pyqtSignal(bool)  # 坐标拾取模式切换
     url_changed = pyqtSignal(str)  # URL 变更时触发
 
     def __init__(self, parent=None):
@@ -280,6 +281,12 @@ class ConfigPanel(QWidget):
         control_row.addWidget(self.btn_pause)
         control_row.addStretch()
         control_row.addWidget(self.lbl_status)
+
+        # 坐标拾取按钮
+        self.btn_coord_pick = QPushButton("🎯 拾取坐标")
+        self.btn_coord_pick.setCheckable(True)
+        self.btn_coord_pick.setToolTip("开启后点击浏览器区域获取坐标，再次点击关闭")
+        control_row.addWidget(self.btn_coord_pick)
 
         main_layout.addLayout(control_row)
 
@@ -393,6 +400,9 @@ class ConfigPanel(QWidget):
         self.btn_save.clicked.connect(self._on_save)
         self.btn_load_config.clicked.connect(self._on_load)
         self.btn_clear_log.clicked.connect(self.log_viewer.clear_log)
+
+        # 坐标拾取按钮
+        self.btn_coord_pick.toggled.connect(self.coord_pick_toggled.emit)
 
         # URL 变更
         self.edit_url.textChanged.connect(self.url_changed.emit)

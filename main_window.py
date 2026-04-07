@@ -1,16 +1,17 @@
 """主窗口模块 - 应用程序主窗口
 
 组装 QWebEngineView（内嵌浏览器，固定 1280×720）和 ConfigPanel（配置面板）
-提供启动/停止/暂停自动化线程的控制接口
+提供启动/停止/暂停自动化线程的控制接口、坐标拾取功能
 """
 
 import os
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QStatusBar, QMessageBox, QSizePolicy,
-    QFrame, QLabel
+    QFrame, QLabel, QLineEdit, QApplication
 )
-from PyQt5.QtCore import Qt, QSize, QTimer, QUrl
+from PyQt5.QtCore import Qt, QSize, QTimer, QUrl, QPoint, QEvent
+from PyQt5.QtGui import QPixmap, QMouseEvent
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript
 
 from config import Config
@@ -22,48 +23,45 @@ class MainWindow(QMainWindow):
     """
     Canvas 游戏自动挂机程序主窗口
     
-    布局：
-    ┌──────────────────────────────────────────────┐
-    │  标题栏: Canvas Game Auto-Bot                │
-    ├───────────────┬──────────────────────────────┤
-    │               │                              │
-    │  配置面板      │  浏览器区域 (1280×720)        │
-    │  (ConfigPanel)│  (QWebEngineView)            │
-    │               │                              │
-    ├───────────────┴──────────────────────────────┤
-    │  运行日志 (LogViewer)                          │
-    └──────────────────────────────────────────────┘
+    功能：
+    - 内嵌浏览器（1280x720）加载游戏页面
+    - 配置面板：URL、模板路径、点击坐标、日志
+    - 自动化线程控制：启动/停止/暂停
+    - 坐标拾取：点击浏览器区域显示坐标
+    - 跨线程截图：响应 AutomationThread 的请求在主线程执行 grab()
     """
 
     def __init__(self):
         super().__init__()
-        self._auto_thread = None  # AutomationThread 实例
-        self._config = Config()   # 配置管理器
-
+        self._auto_thread = None
+        self._config = Config()
         self.config_panel: ConfigPanel = None
         self.web_view = None
+
+        # 坐标拾取模式开关
+        self._coord_pick_mode = False
 
         self._setup_window()
         self._build_ui()
         self._connect_signals()
-        self._load_initial_config()
+        self._setup_coord_picker()
+
+        # 延迟初始化配置和加载（等 UI 完全就绪）
+        QTimer.singleShot(500, self._load_initial_config)
 
     # ---------- 初始化 ----------
 
     def _setup_window(self):
-        """设置窗口属性"""
         self.setWindowTitle("Canvas Game Auto-Bot")
         self.resize(1720, 900)
 
     def _build_ui(self):
-        """构建界面"""
         central = QWidget()
         self.setCentralWidget(central)
         root_layout = QVBoxLayout(central)
         root_layout.setContentsMargins(4, 4, 4, 4)
         root_layout.setSpacing(4)
 
-        # 上半部分：水平分割器 [配置面板 | 浏览器]
         top_splitter = QSplitter(Qt.Horizontal)
 
         # --- 左侧：配置面板 ---
@@ -79,10 +77,10 @@ class MainWindow(QMainWindow):
         self.web_view = QWebEngineView()
         self.web_view.setFixedSize(1280, 720)
 
-        # ---- 配置 WebEngine 页面属性 ----
+        # ---- WebEngine 配置 ----
         page = self.web_view.page()
 
-        # 1. User-Agent 伪装为 Chrome
+        # 1. User-Agent
         chrome_ua = (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -92,17 +90,17 @@ class MainWindow(QMainWindow):
 
         # 2. 启用 Web 功能
         from PyQt5.QtWebEngineWidgets import QWebEngineSettings
-        settings = page.settings()
-        settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
-        settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
-        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
-        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
-        settings.setAttribute(QWebEngineSettings.AllowRunningInsecureContent, True)
-        settings.setAttribute(QWebEngineSettings.XSSAuditingEnabled, False)
-        settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
-        settings.setAttribute(QWebEngineSettings.Accelerated2dCanvasEnabled, True)
+        s = page.settings()
+        s.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+        s.setAttribute(QWebEngineSettings.PluginsEnabled, True)
+        s.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
+        s.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
+        s.setAttribute(QWebEngineSettings.AllowRunningInsecureContent, True)
+        s.setAttribute(QWebEngineSettings.XSSAuditingEnabled, False)
+        s.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+        s.setAttribute(QWebEngineSettings.Accelerated2dCanvasEnabled, True)
 
-        # 3. 持久化存储路径
+        # 3. 持久化存储
         profile = page.profile()
         storage_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webengine_data")
         os.makedirs(storage_path, exist_ok=True)
@@ -110,30 +108,29 @@ class MainWindow(QMainWindow):
         profile.setCachePath(storage_path)
         profile.setHttpCacheType(profile.DiskHttpCache)
 
-        # 4. 注入 OPFS Polyfill（在页面 JS 执行前）
+        # 4. 注入 OPFS Polyfill
         self._inject_opfs_polyfill(profile)
 
-        # 4b. 页面加载完成后二次确认注入（SPA 框架可能动态覆盖 navigator）
-        def _reinject_on_load(ok):
+        # 5. 页面加载后多次注入 polyfill（SPA 框架兼容）
+        def _reinject(ok):
             self._reinforce_polyfill(page)
-            # 延迟多次注入，等待 SPA 框架（single-spa）逐步初始化
-            from PyQt5.QtCore import QTimer
-            for delay in [1000, 3000, 6000, 10000]:
-                QTimer.singleShot(delay, lambda d=delay: (
-                    self.config_panel.append_log(f"[Polyfill] 第 {d//1000}s 注入"),
-                    self._reinforce_polyfill(page)
-                ))
-        page.loadFinished.connect(_reinject_on_load)
+            for delay in [1000, 3000, 6000]:
+                QTimer.singleShot(delay, lambda d=delay: self._reinforce_polyfill(page))
+        page.loadFinished.connect(_reinject)
 
-        # 5. 页面加载事件
         page.loadFinished.connect(self._on_page_load_finished)
 
         browser_layout.addWidget(self.web_view, alignment=Qt.AlignCenter)
 
-        # 浏览器下方状态标签
+        # 浏览器状态栏（含坐标拾取提示）
+        status_row = QHBoxLayout()
         self.lbl_browser_status = QLabel("浏览器: 未加载")
         self.lbl_browser_status.setStyleSheet("color: #888; font-size: 11px; padding: 2px;")
-        browser_layout.addWidget(self.lbl_browser_status)
+        self.lbl_coords = QLabel("")
+        self.lbl_coords.setStyleSheet("color: #e6a700; font-size: 11px; font-weight: bold; padding: 2px;")
+        status_row.addWidget(self.lbl_browser_status, stretch=1)
+        status_row.addWidget(self.lbl_coords)
+        browser_layout.addLayout(status_row)
 
         top_splitter.addWidget(browser_container)
         top_splitter.setStretchFactor(0, 0)
@@ -142,7 +139,6 @@ class MainWindow(QMainWindow):
 
         root_layout.addWidget(top_splitter, stretch=6)
 
-        # 状态栏
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
         status_bar.showMessage("就绪")
@@ -159,15 +155,70 @@ class MainWindow(QMainWindow):
         if hasattr(self.config_panel, 'btn_load_url'):
             self.config_panel.btn_load_url.clicked.connect(self._load_url)
 
+        # 坐标拾取模式
+        if hasattr(self.config_panel, 'coord_pick_toggled'):
+            self.config_panel.coord_pick_toggled.connect(self.set_coord_pick_mode)
+
+    def _setup_coord_picker(self):
+        """
+        设置坐标拾取模式
+        
+        当用户开启坐标拾取时，鼠标在浏览器上点击会显示当前坐标。
+        通过重写 mousePressEvent 实现。
+        需要在 ConfigPanel 中添加"拾取坐标"按钮来切换此模式。
+        """
+
+        # 给 QWebEngineView 安装事件过滤器来拦截鼠标点击
+        self.web_view.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        """事件过滤器 - 用于坐标拾取"""
+        if self._coord_pick_mode and obj is self.web_view:
+            if event.type() == QEvent.MouseMove:
+                pos = event.pos()
+                self.lbl_coords.setText(f"[坐标拾取] ({pos.x()}, {pos.y()})")
+            elif event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.LeftButton:
+                    pos = event.pos()
+                    x, y = pos.x(), pos.y()
+                    self.lbl_coords.setText(f"已选择: ({x}, {y})")
+                    self.config_panel.append_log(f"[坐标] 点击位置: ({x}, {y})")
+
+                    # 将坐标填入最近聚焦的输入框（如果有）
+                    focused = QApplication.focusWidget()
+                    if isinstance(focused, (QLineEdit)):
+                        focused.setText(str(x))
+                        # 跳到下一个（Y 坐标）
+                        next_widget = focused.nextInFocusChain()
+                        if isinstance(next_widget, QLineEdit):
+                            next_widget.setFocus()
+                            next_widget.setText(str(y))
+                            self.config_panel.append_log(f"[坐标] 已填入: X={x}, Y={y}")
+
+                    return False  # 不阻止事件继续传播
+        return super().eventFilter(obj, event)
+
+    def set_coord_pick_mode(self, enabled: bool):
+        """切换坐标拾取模式"""
+        self._coord_pick_mode = enabled
+        if enabled:
+            self.lbl_browser_status.setText("[坐标拾取模式] 点击浏览器区域获取坐标")
+            self.web_view.setCursor(Qt.CrossCursor)
+        else:
+            self.lbl_browser_status.setText("浏览器: 就绪")
+            self.web_view.setCursor(Qt.ArrowCursor)
+
     def _load_initial_config(self):
-        """程序启动时加载已有配置"""
+        """程序启动时加载配置并自动加载游戏 URL"""
         if self._config.load() and self.config_panel:
             self.config_panel.set_config_data(self._config.to_dict())
 
             url = self._config.data.url
             if url and "example.com" not in url:
-                self.web_view.load(QUrl(url))
-                self.lbl_browser_status.setText(f"浏览器: {url}")
+                # 延迟 1 秒后加载，确保 UI 和 polyfill 都就绪
+                QTimer.singleShot(1000, lambda u=url: self._do_load_url(u))
+                self.config_panel.append_log(f"[启动] 将自动加载: {url}")
+                self.lbl_browser_status.setText("浏览器: 准备加载...")
 
     # ---------- 控制回调 ----------
 
@@ -185,9 +236,14 @@ class MainWindow(QMainWindow):
         config_data = self.config_panel.get_config_data()
         templates_base_dir = self._config.base_dir
 
+        # 创建并配置自动化线程
         self._auto_thread = AutomationThread(self.web_view)
         self._auto_thread.configure(config_data, templates_base_dir)
 
+        # 关键连接：截图请求信号 -> 主线程执行 grab() -> 返回结果给线程
+        self._auto_thread.request_screenshot.connect(self._on_screenshot_request)
+
+        # 日志/状态/错误信号
         self._auto_thread.log_signal.connect(self.config_panel.append_log)
         self._auto_thread.state_changed.connect(self._on_state_changed)
         self._auto_thread.error_signal.connect(self._on_error)
@@ -197,6 +253,26 @@ class MainWindow(QMainWindow):
 
         self._auto_thread.start()
         self.statusBar().showMessage("自动化运行中...")
+        self.config_panel.append_log("[主窗口] 自动化线程已启动")
+
+    def _on_screenshot_request(self):
+        """
+        主线程处理截图请求（由 AutomationThread 发出 signal 触发）
+        
+        这是修复跨线程 OpenGL 崩溃的关键：
+        - AutomationThread 在后台线程发出 request_screenshot 信号
+        - 此槽函数在主线程中被调用（Qt 信号跨线程自动排队）
+        - 在主线程调用 grab()，OpenGL 上下文正确
+        - 调用 on_screenshot_ready() 将结果返回给线程
+        """
+        try:
+            pixmap = self.web_view.grab()
+            if self._auto_thread:
+                self._auto_thread.on_screenshot_ready(pixmap)
+        except Exception as e:
+            self.config_panel.append_log(f"[ERROR] 主线程截图失败: {e}")
+            if self._auto_thread:
+                self._auto_thread.on_screenshot_ready(None)
 
     def _on_stop(self):
         """用户点击【停止】"""
@@ -225,18 +301,27 @@ class MainWindow(QMainWindow):
             self.config_panel.set_status_text("已暂停")
 
     def _on_state_changed(self, state_name: str):
-        """状态机状态变化"""
         self.statusBar().showMessage(f"状态: {state_name}")
         self.lbl_browser_status.setText(f"状态: {state_name}")
 
     def _on_error(self, error_msg: str):
-        """错误信息"""
         self.config_panel.append_log(f"[ERROR] {error_msg}")
 
     # ---------- URL 加载 ----------
 
+    def _do_load_url(self, url: str):
+        """内部方法：实际执行 URL 加载"""
+        qurl = QUrl(url)
+        if not qurl.isValid():
+            self.config_panel.append_log(f"[加载] 无效的 URL: {url}")
+            return
+
+        self.web_view.load(qurl)
+        self.config_panel.append_log(f"[加载] {url}")
+        self.lbl_browser_status.setText("浏览器: 加载中...")
+
     def _load_url(self):
-        """加载 URL 到内嵌浏览器"""
+        """用户点击【加载页面】按钮"""
         url = self.config_panel.get_url().strip()
         if not url:
             return
@@ -245,36 +330,13 @@ class MainWindow(QMainWindow):
             url = "https://" + url
             self.config_panel.edit_url.setText(url)
 
-        qurl = QUrl(url)
-        if not qurl.isValid():
-            QMessageBox.warning(self, "URL 无效", f"无法解析: {url}")
-            return
-
-        self.web_view.load(qurl)
-        self.config_panel.append_log(f"[加载] {url}")
-        self.lbl_browser_status.setText("浏览器: 加载中...")
-
-        def on_load_ok(ok):
-            if ok:
-                self.lbl_browser_status.setText(f"浏览器: 已就绪 ({url})")
-            else:
-                self.config_panel.append_log(f"[加载] 页面加载可能失败")
-                self.lbl_browser_status.setText("浏览器: 加载异常")
-
-        self.web_view.loadFinished.connect(on_load_ok)
+        self._do_load_url(url)
 
     # ---------- OPFS Polyfill ----------
 
     def _inject_opfs_polyfill(self, profile):
-        """
-        使用 QWebEngineScript + DocumentCreation 注入点，确保在页面任何 JS 执行之前注入。
-        
-        关键区别：
-        - runJavaScript(): 页面加载完成后才执行 → 太晚，游戏已报错
-        - QWebEngineScript(DocumentCreation): 文档创建时就注入 → 在所有脚本之前执行
-        """
+        """使用 QWebEngineScript 在页面创建前注入 OPFS Polyfill"""
         script = QWebEngineScript()
-
         script.setName("opfs_polyfill")
         script.setSourceCode(R"""(function(){
 if(navigator.storage&&typeof navigator.storage.getDirectory==='function')return;
@@ -292,39 +354,29 @@ console.log('[OPFS-Polyfill] OK');
         profile.scripts().insert(script)
 
     def _reinforce_polyfill(self, page):
-        """
-        通过 runJavaScript 注入/确认 polyfill（由外部调用方控制时机）
-        """
-        reinforce_js = R"""(function(){
+        """延迟补充注入 polyfill（防止 SPA 覆盖）"""
+        js = R"""(function(){
 if(typeof navigator.storage.getDirectory !== 'function'){
   var S={};
   class H{constructor(n,d,m){this.name=n;this.kind='file';this._d=d||new ArrayBuffer(0);this._m=m||'application/octet-stream'}async getFile(){return new File([this._d],this.name,{type:this._m})}async createWritable(){var s=this;return{write:function(d){if(d instanceof ArrayBuffer)s._d=d;else if(typeof d==='string')s._d=new TextEncoder().encode(d).buffer;else if(d&&d.buffer)s._d=d.buffer;S[s.name]={d:s._d,m:s._m};return Promise.resolve()},close:function(){return Promise.resolve()}}}}
   class D{constructor(){this.name='/';this.kind='directory'}async getFileHandle(n,o){var e=S[n];if(!e||!e.d){if(o&&o.create){e={d:new ArrayBuffer(0),m:'application/octet-stream'};S[n]=e}else{throw new DOMException('NotFound','NotFoundError')}}return new H(n,e.d,e.m)}async getDirectoryHandle(n,o){return this}}
   navigator.storage=navigator.storage||{};
-  navigator.storage.getDirectory=function(){console.log('[OPFS-REINFORCE] getDirectory');return Promise.resolve(new D())};
-  navigator.storage.estimate=async()=>({quota:10737418240,usage:0});
-  console.log('[OPFS-REINFORCE] OK');
-} else {
-  console.log('[OPFS-REINFORCE] skip - already exists');
+  navigator.storage.getDirectory=function(){console.log('[OPFS-REINFORCE] OK');return Promise.resolve(new D())};
 }
 })();"""
-        page.runJavaScript(reinforce_js)
-
-    # ---------- 事件回调 ----------
+        page.runJavaScript(js)
 
     def _on_page_load_finished(self, ok: bool):
-        """页面加载完成的回调"""
         current_url = self.web_view.url().toString()
         if ok:
             self.config_panel.append_log(f"[页面] 加载完成: {current_url}")
             self.lbl_browser_status.setText("浏览器: 已就绪")
         else:
-            self.config_panel.append_log(f"[页面] 加载可能未完全成功: {current_url}")
+            self.config_panel.append_log(f"[页面] 加载可能未完全成功")
 
     # ---------- 窗口事件 ----------
 
     def closeEvent(self, event):
-        """关闭窗口时停止线程、保存必要数据"""
         if self._auto_thread and self._auto_thread.is_running:
             self._auto_thread.stop()
             self._auto_thread.wait(5000)
