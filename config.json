@@ -1,0 +1,35 @@
+{
+    "url": "https://www.wanyiwan.top/game/xjjdcj",
+    "threshold": 0.7,
+    "click_interval": 0.5,
+    "max_loops": 10,
+    "templates": {
+        "defeat": "templates\\sbjs.png",
+        "in_battle": "templates\\zdjmbs.png",
+        "map_screen": "templates\\dtbs.png",
+        "node_blue": "templates\\blue.png",
+        "node_green": "templates\\green.png",
+        "node_purple": "templates\\purple.png",
+        "node_red": "templates\\red.png",
+        "node_yellow": "templates\\yellow.png",
+        "victory": "templates\\yeah.png"
+    },
+    "fixed_clicks": {
+        "auto_fight": [
+            615,
+            470
+        ],
+        "event_option0": [
+            400,
+            550
+        ],
+        "event_option1": [
+            640,
+            550
+        ],
+        "event_option2": [
+            880,
+            550
+        ]
+    }
+}

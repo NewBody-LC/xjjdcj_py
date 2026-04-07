@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"><meta http-equiv="X-UA-Compatible" content="ie=edge"><meta name="bm_app_id" content="null"><meta name="bm_sprint_id" content="S090011500910"><meta name="data-aspm" content="a3047"><meta name="data-bizType" content="games">
+<script type="tern-site-config">{"yuyanId":"180020010001270314","name":"gameplay-pc","presets":[{"name":"gameplay-pc","yuyanId":"180020010001270314","isUnio":true,"entry":"https://render.alipay.com/p/yuyan/180020010001270314/","publicPath":"https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/","version":"latest","env":"PROD","network":"INTERNET","props":{"routes":[],"apps":[]}}],"apps":[],"mode":"cloud","version":"S090011500910","orchestration":["gameplay-pc"],"metadata":{"favicon":"","metas":[],"title":"","links":[]},"xframe":true,"authType":"custom","experienceConfig":{},"monitor":true,"indexAppConfig":{"authType":"antbuservice","metadata":{"favicon":"https://i.alipayobjects.com/common/favicon/favicon.ico"},"appName":"gameplay-pc","version":"1.0.0","antdVersion":"5.29.1","bigfishVersion":"4.5.32","yuyanId":"180020010001270314","sprintId":"S090011500910","buildTime":1771326352095,"createTime":"","proxy":{"PROD":{"/pcgamecenterfaas":{"target":"https://webgwmobile.alipay.com","mode":"cors"},"/gamecenteruprod":{"target":"https://webgwmobiler.alipay.com","mode":"cors"},"/gameevent":{"target":"https://webgwmobiler.alipay.com","mode":"cors"},"/gameauth":{"target":"https://webgwmobiler.alipay.com","mode":"cors"},"/gamecenterhome":{"target":"https://webgwmobiler.alipay.com","mode":"cors"}},"mode":"cors"}}}</script><meta charset="utf-8"><meta name="tern-framework-version" content="S090011471365"><script>window.injectInfo = { env: "PROD" };</script><script>window.publicPath = "https://gw.alipayobjects.com/render/p/yuyan/180020010001265696/";</script><script>(function() {
+      if (window.document.documentMode && !window.__POWERED_BY_QIANKUN__) {
+        var winPublicPath = window.publicPath || '/';
+        var publicPathWithoutSlash = winPublicPath.substring(0, winPublicPath.length-1);
+        document.writeln('<script src="'+publicPathWithoutSlash+'/polyfill-550f37da.js" crossorigin="anonymous"><\/script>');
+      }
+    })();</script><!-- ternbaseEnv: prod -->
+<script>window.__TERN__ = {"ssr":true,"x-ldcid-level":null,"x-user-group":"percentage_75","env":"PROD","user":{"clientUser":null,"outUserNo":"2088712648000581","outUserNoDigest":"88d68eb32e00b0679bdcca06b3a39009"},"_localDev":false,"netType":"INTERNET","tenant":"ALIPW3CN","logoutUrl":"","webgw":{"webgwDomain":""}};</script><script src="https://gw.alipayobjects.com/render/p/yuyan/180020010001265696/main-dc280f4e.js" crossorigin="anonymous"></script>
+
+<script>window.injectInfo = { env: "PROD" };</script><script>window.publicPath = "https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/";</script><script>!function(){var e=window;function n(n){if(e.g_monitor&&e.g_monitor.events){var t=e.g_monitor.events;t.length<20&&t.push(n)}}e.g_monitor=e.g_monitor||{listener:{},events:[]};var r=e.g_monitor.listener;function t(t,n){try{e.addEventListener?e.addEventListener(t,n,!0):e.attachEvent?e.attachEvent("on"+t,n):e[t]=n,r[t]=n}catch(n){console.warn("Tracert 监控事件注册失败："+t,n)}}r.error||t("error",n),r.unhandledrejection||t("unhandledrejection",n)}();</script><script type="dependencymap">{"dependencies": {"dayjs":{"url":"https://gw.alipayobjects.com/os/lib/dayjs/1.11.19/dayjs.min.js","version":"1.11.19","range":"^1.0.0"},"history":{"url":"https://gw.alipayobjects.com/os/lib/history/5.3.0/umd/history.production.min.js","version":"5.3.0","range":"^5.0.0"},"lodash":{"url":"https://gw.alipayobjects.com/os/lib/lodash/4.17.23/lodash.min.js","version":"4.17.23","range":"^4.0.0"},"moment":{"url":"https://gw.alipayobjects.com/os/lib/moment/2.30.1/min/moment-with-locales.min.js","version":"2.30.1","range":"^2.0.0"},"react":{"url":"https://gw.alipayobjects.com/os/lib/react/18.3.1/umd/react.production.min.js","version":"18.3.1","range":"^18.0.0"},"@ant-design/icons":{"url":"https://gw.alipayobjects.com/os/lib/ant-design/icons/4.8.3/dist/index.umd.min.js","version":"4.8.3","range":"^4.0.0","peerDeps":["react"]},"react-dom":{"url":"https://gw.alipayobjects.com/os/lib/react-dom/18.3.1/umd/react-dom.production.min.js","version":"18.3.1","range":"^18.0.0","peerDeps":["react"]},"react-router":{"url":"https://gw.alipayobjects.com/os/lib/react-router/6.3.0/umd/react-router.production.min.js","version":"6.3.0","range":"^6.0.0","peerDeps":["react","history"]},"antd":{"url":"https://gw.alipayobjects.com/os/lib/antd/5.29.1/dist/antd-with-locales.min.js","version":"5.29.1","range":"^5.0.0","peerDeps":["react","react-dom","dayjs"]},"react-router-dom":{"url":"https://gw.alipayobjects.com/os/lib/react-router-dom/6.3.0/umd/react-router-dom.production.min.js","version":"6.3.0","range":"^6.0.0","peerDeps":["react","history","react-router"]}}}</script>
+
+
+
+
+
+
+
+<link rel="shortcut icon" href="https://i.alipayobjects.com/common/favicon/favicon.ico">
+<link rel="manifest" href="https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/manifest.json">
+<link rel="manifest" href="https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/manifest.webmanifest">
+<link rel="stylesheet" href="https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/umi.3decb8b2.css">
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/alipay/react16-map-set-polyfill/1.0.2/dist/react16-map-set-polyfill.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/dayjs/1.11.19/dayjs.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/history/5.3.0/umd/history.production.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/lodash/4.17.23/lodash.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/moment/2.30.1/min/moment-with-locales.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/react/18.3.1/umd/react.production.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/ant-design/icons/4.8.3/dist/index.umd.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/react-router/6.3.0/umd/react-router.production.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/antd/5.29.1/dist/antd-with-locales.min.js"></script>
+<script crossorigin="" src="https://gw.alipayobjects.com/os/lib/react-router-dom/6.3.0/umd/react-router-dom.production.min.js"></script>
+<script>// prettier-ignore
+!function(n,o,e,t,a,i){n.yuyanMonitor={config: function(){}, logError: function() {}, log: function(){}};var r=o.createElement("script"),c=o.querySelector("head").getElementsByTagName("script")[0];
+      r.async=1,r.src="https://gw.alipayobjects.com/render/p/yuyan_npm/@alipay_yuyan-monitor-sdk/1.3.0/dist/index.umd.min.js",r.crossOrigin="anonymous",r.onload=function(){
+        YuyanMonitor&&(n.yuyanMonitor=new YuyanMonitor({"yuyanId":"180020010001270314","_appId":"180020010001270314","sprintId":"S090011500910","isH5":false}));if(n.__TERN__){if(n.__TERN__.user&&n.__TERN__.user.outUserNo){n.yuyanMonitor.config({userId:n.__TERN__.user.outUserNo,env:n.__TERN__.env});}else{n.yuyanMonitor.config({env:n.__TERN__.env});}}},o.querySelector("head").insertBefore(r,c)}(window,window.document)</script>
+
+<script>
+  !function(src) {
+    var _windowVM__TERN__;
+    function assignProperty(target, k, v) {
+      if (target.hasOwnProperty(k) && target[k] !== undefined) return;
+      if (v === undefined) return;
+      target[k] = v;
+    }
+    window._to = {};
+    if ((_windowVM__TERN__ = window.__TERN__) !== null && _windowVM__TERN__ !== void 0 && (_windowVM__TERN__ = _windowVM__TERN__.user) !== null && _windowVM__TERN__ !== void 0 && (_windowVM__TERN__ = _windowVM__TERN__.clientUser) !== null && _windowVM__TERN__ !== void 0 && _windowVM__TERN__.userId) {
+      window._to.role_id = window.__TERN__.user.clientUser.userId;
+    }
+    window._to.yuyanId=180020010001270314;
+    window._to._isPrimaryApp=true;
+    assignProperty(window._to, 'expoFixedDom', true);
+assignProperty(window._to, 'spmAPos', "a3047");
+assignProperty(window._to, 'bizType', "games");
+assignProperty(window._to, 'autoExpo', true);
+assignProperty(window._to, 'autoLogPv', undefined);
+
+    
+  (function loader() {
+    if (Object.prototype.toString.call(window.TracertCmdCache) === '[object Array]') {
+      window.TracertCmdCache = [];
+    }
+    var Tracert = {
+      _isInit: true,
+      _readyToRun: [],
+      // 生成uuid
+      _guid: function _guid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          var r = Math.random() * 16 | 0;
+          var v = c === 'x' ? r : r & 0x3 | 0x8;
+          return v.toString(16);
+        });
+      },
+      get: function get(key) {
+        if (key === 'pageId') {
+          window._tracert_loader_cfg = window._tracert_loader_cfg || {};
+          if (window._tracert_loader_cfg.pageId) {
+            return window._tracert_loader_cfg.pageId;
+          }
+          var metaa = document.querySelectorAll('meta[name=data-aspm]');
+          var spma = metaa && metaa[0] && metaa[0].getAttribute('content');
+          var spmb = document.body && document.body.getAttribute('data-aspm');
+          var pageId = spma && spmb ? "".concat(spma, ".").concat(spmb, "_").concat(Tracert._guid(), "_").concat(Date.now()) : "-_".concat(Tracert._guid(), "_").concat(Date.now());
+          window._tracert_loader_cfg.pageId = pageId;
+          return pageId;
+        }
+        return this[key];
+      },
+      call: function call() {
+        var args = arguments;
+        var argsList;
+        try {
+          argsList = [].slice.call(args, 0);
+        } catch (ex) {
+          var argsLen = args.length;
+          argsList = [];
+          for (var i = 0; i < argsLen; i++) {
+            argsList.push(args[i]);
+          }
+        }
+        Tracert.addToRun(function () {
+          Tracert.call.apply(Tracert, argsList);
+        });
+      },
+      addToRun: function addToRun(_fn) {
+        var fn = _fn;
+        if (typeof fn === 'function') {
+          fn._logTimer = new Date() - 0;
+          Tracert._readyToRun.push(fn);
+        }
+      },
+      createTracert: undefined,
+      spmAPos: undefined,
+      autoLogPv: undefined,
+      autoExpo: undefined,
+      bizType: undefined,
+      ifRouterNeedPv: undefined,
+      enableMicroAppInstance: undefined,
+      v: undefined
+    };
+    var fnlist = ['config', 'logPv', 'info', 'error', 'click', 'expo', 'pageName', 'pageState', 'time', 'timeEnd', 'parse', 'expoCheck', 'stringify', 'report', 'set', 'before'];
+    for (var i = 0; i < fnlist.length; i++) {
+      var fn = fnlist[i];
+      (function (fn) {
+        Tracert[fn] = function () {
+          var args = arguments;
+          var argsList;
+          try {
+            argsList = [].slice.call(args, 0);
+          } catch (ex) {
+            var argsLen = args.length;
+            argsList = [];
+            for (var _i2 = 0; _i2 < argsLen; _i2++) {
+              argsList.push(args[_i2]);
+            }
+          }
+          argsList.unshift(fn);
+          Tracert.addToRun(function () {
+            Tracert.call.apply(Tracert, argsList);
+          });
+        };
+      })(fn);
+    }
+    if (window.Proxy) {
+      var handler = {
+        get: function get(target, property) {
+          var _targetVMhasOwnPropert;
+          if (target !== null && target !== void 0 && (_targetVMhasOwnPropert = target.hasOwnProperty) !== null && _targetVMhasOwnPropert !== void 0 && _targetVMhasOwnPropert.call(target, property)) {
+            return target[property];
+          }
+          return target.call.bind(this, property);
+        }
+      };
+      var proxyTracert = new window.Proxy(Tracert, handler);
+      window.Tracert = proxyTracert;
+    } else {
+      window.Tracert = Tracert;
+    }
+  })();
+
+
+    var _windowVMdocument, _windowVMdocumentVMcrea;
+    var curScript = (_windowVMdocument = window.document) === null || _windowVMdocument === void 0 || (_windowVMdocumentVMcrea = _windowVMdocument.createElement) === null || _windowVMdocumentVMcrea === void 0 ? void 0 : _windowVMdocumentVMcrea.call(_windowVMdocument, 'script');
+    if (!curScript) return;
+    curScript.async = true;
+    var _windowVMdocumentVMquer, _documentVMquerySelect;
+    curScript.crossOrigin = 'anonymous';
+    curScript.src = src;
+    var insertScript = ((_windowVMdocumentVMquer = window.document.querySelector('head')) === null || _windowVMdocumentVMquer === void 0 ? void 0 : _windowVMdocumentVMquer.getElementsByTagName('script')[0]) || null;
+    if (!insertScript) return;
+    (_documentVMquerySelect = document.querySelector('head')) === null || _documentVMquerySelect === void 0 ? void 0 : _documentVMquerySelect.insertBefore(curScript, insertScript);
+    curScript.onerror = function () {
+      console.warn("[Bigfish] Tracert script load error, please check your network and spma.");
+      var fallback = function fallback() {
+        console.warn("[Bigfish] Tracert run error, please make sure the script import right.");
+      };
+      var fnlist = ["call", "start", "config", "logPv", "info", "err", "click", "expo", "pageName", "pageState", "time", "timeEnd", "parse", "checkExpo", "stringify", "report", "set", "before"];
+      if (Object.prototype.toString.call(window.Tracert) != '[object Object]') {
+        window.Tracert = {};
+      }
+      for (var i = 0; i < fnlist.length; i++) {
+        window.Tracert[fnlist[i]] = fallback;
+      }
+    };
+  }('https://ur.alipay.com/tracert_a3047.js');
+</script>
+<script type="umi-route-chunk-files-map">{"p":"gameplay-pc","b":"mako","f":[["59b86d97-async.c2f2922d.js","59b86d97"],["dfb5f1e2-async.5d5ce600.js","dfb5f1e2"],["6bb5b133-async.5a1fe759.css","6bb5b133"],["6bb5b133-async.644ebefd.js","6bb5b133"],["c2578faf-async.1e4038fe.js","c2578faf"],["a98a64d0-async.965c962f.js","a98a64d0"],["a98a64d0-async.292c0d9c.css","a98a64d0"],["fcaf5dab-async.ed336f79.js","fcaf5dab"],["fcaf5dab-async.5c7f63e0.css","fcaf5dab"],["0a44ea72-async.7e8eead7.js","0a44ea72"],["0a44ea72-async.6f02e884.css","0a44ea72"],["916ed57f-async.33c781b2.js","916ed57f"],["916ed57f-async.96f20147.css","916ed57f"],["aec481dc-async.ca49206b.js","aec481dc"],["lib-async.4bd59da2.css","lib"],["lib-async.95ed4b06.js","lib"],["lib_readable-stream-async.d0d661a1.js","lib_readable-stream"],["lib_lottie-web-async.d303816f.js","lib_lottie-web"],["lib_bn_js-async.b2d52855.js","lib_bn.js"],["shared_byCPoISe-async.30a5cd14.js","shared_byCPoISe"],["shared_byCPoISe-async.8f1b9d89.css","shared_byCPoISe"],["shared_Z53YO6kS-async.80b887ca.js","shared_Z53YO6kS"],["shared_Z53YO6kS-async.3804350d.css","shared_Z53YO6kS"]],"r":{"/*":[1,14,15,0],"/":[0,14,15],"/portal":[11,12,19,20,0,14,15],"/home":[9,10,14,15,17,19,20,21,22,0],"/login":[7,8,14,15,19,20,0],"/gameIframe":[5,6,0,14,15],"/gameUpgrade":[4,14,15,0],"/login/:appName":[7,8,14,15,19,20,0],"/game/:appName":[2,3,14,15,16,17,18,21,22,0]}}</script>
+
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/0a44ea72-async.7e8eead7.js  data-mako = gameplay-pc:0a44ea72 async crossorigin="anonymous"></script>
+<link rel="preload" href=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/0a44ea72-async.6f02e884.css as="style"  data-mako = gameplay-pc:0a44ea72 crossorigin="anonymous">
+<link rel="preload" href=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/lib-async.4bd59da2.css as="style"  data-mako = gameplay-pc:lib crossorigin="anonymous">
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/lib-async.95ed4b06.js  data-mako = gameplay-pc:lib async crossorigin="anonymous"></script>
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/lib_lottie-web-async.d303816f.js  data-mako = gameplay-pc:lib_lottie-web async crossorigin="anonymous"></script>
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/shared_byCPoISe-async.30a5cd14.js  data-mako = gameplay-pc:shared_byCPoISe async crossorigin="anonymous"></script>
+<link rel="preload" href=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/shared_byCPoISe-async.8f1b9d89.css as="style"  data-mako = gameplay-pc:shared_byCPoISe crossorigin="anonymous">
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/shared_Z53YO6kS-async.80b887ca.js  data-mako = gameplay-pc:shared_Z53YO6kS async crossorigin="anonymous"></script>
+<link rel="preload" href=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/shared_Z53YO6kS-async.3804350d.css as="style"  data-mako = gameplay-pc:shared_Z53YO6kS crossorigin="anonymous">
+<script src=https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/59b86d97-async.c2f2922d.js  data-mako = gameplay-pc:59b86d97 async crossorigin="anonymous"></script>
+</head>
+<body>
+  
+<div id="root"></div>
+<script src="https://gw.alipayobjects.com/render/p/yuyan/180020010001270314/umi.1855b40a.js" entry="" crossorigin="anonymous"></script>
+<script>if (window.location.hostname === 'wanyiwan.top') {
+        // 构建新的URL，保持路径和参数不变
+        const newUrl = 'https://www.wanyiwan.top' + window.location.pathname + window.location.search + window.location.hash;
+        // 立即重定向
+        window.location.replace(newUrl);
+    }</script>
+
+
+  </body>
+</html>

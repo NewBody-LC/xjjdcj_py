@@ -1,0 +1,65 @@
+# 任务：开发 Canvas 游戏自动挂机程序（Python + PyQt5 + 模板匹配）
+
+## 1. 技术栈
+- Python 3.9+
+- PyQt5 (QWebEngineView 嵌入网页，同时提供配置界面)
+- OpenCV (cv2) 用于模板匹配
+- pytesseract (可选，用于 OCR)
+- numpy, Pillow
+
+## 2. 程序要求
+- **独立可执行**：最终用 PyInstaller 打包成单个 .exe，拷贝到任何 Windows 电脑都能直接运行，无需安装 Python。
+- **窗口固定**：内嵌浏览器窗口大小固定为 1280×720，用户无法拖拽改变大小。
+- **配置可视化**：程序启动后显示一个配置界面（PyQt5 原生控件），允许用户：
+  - 输入游戏 URL
+  - 设置模板图片路径
+  - 调整匹配阈值、点击间隔、循环次数等
+  - 保存/加载配置
+- **自动化核心**：基于模板匹配 + 有限状态机，自动完成游戏循环（参考之前提供的状态机设计）。
+- **用户提供资源**：用户会提供在 1280×720 窗口下截取的局部不变区域图片（如按钮、标题、节点图标等），程序需加载这些模板并用于状态识别。
+
+## 3. 代码结构要求
+- 使用 PyQt5 的 QWebEngineView 加载游戏页面。
+- 通过 QWebEnginePage.runJavaScript() 注入点击事件（或直接模拟鼠标点击）。
+- 状态机独立为一个类，定期（每0.5秒）截图 Canvas 区域，用 OpenCV 匹配模板判断当前状态，执行对应动作。
+- 配置界面与自动化逻辑解耦，配置保存在 JSON 文件中。
+- 提供详细的日志输出（可显示在配置界面的文本框中）。
+
+## 4. 关键实现细节
+- 模板匹配：因为窗口固定，直接使用 cv2.matchTemplate + TM_CCOEFF_NORMED，阈值默认 0.7。
+- 坐标转换：Canvas 内部分辨率可能与 CSS 显示尺寸不同，需通过 runJavaScript 获取 canvas.width/height 和 getBoundingClientRect，计算缩放比例后点击。
+- 事件选项：由于文字动态变化，按固定坐标点击（用户可配置三个选项的屏幕坐标）。
+- 节点识别：用户提供黄/红/蓝/绿/紫五种节点图标模板，程序在遗迹地图上匹配所有同色节点，选择最近的一个点击。
+- 异常处理：网络超时、模板匹配失败、OCR 读取失败等都要有重试和日志。
+
+## 5. 输出要求
+生成完整的 Python 代码，包括：
+- 主窗口类（继承 QMainWindow）
+- 配置面板类（QWidget）
+- 自动化线程（QThread，避免阻塞 UI）
+- 状态机逻辑
+- 必要的注释
+- requirements.txt
+
+## 6. 示例配置数据结构（JSON）
+{
+    "url": "https://example.com/game",
+    "templates": {
+        "victory": "templates/victory.png",
+        "challenge": "templates/challenge.png",
+        "node_yellow": "templates/node_yellow.png"
+    },
+    "threshold": 0.7,
+    "fixed_clicks": {
+        "event_option0": [200, 500],
+        "auto_fight": [100, 650]
+    },
+    "click_interval": 0.5,
+    "max_loops": 0
+}
+
+## 7. 打包说明
+- 提供 PyInstaller 打包命令（含 UPX 压缩选项）。
+- 提醒用户注意 QWebEngineView 打包时需要包含 QtWebEngine 相关依赖，避免中文路径问题。
+
+请生成可直接运行的代码，代码要健壮、可读性强。
