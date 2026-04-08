@@ -15,24 +15,41 @@ class GameConfig:
     max_loops: int = 0  # 0 表示无限循环
 
     # 模板图片路径（相对于程序目录或绝对路径）
+    # 界面状态模板（单次匹配，按优先级排列）
     templates: Dict[str, str] = field(default_factory=lambda: {
-        "map_screen": "templates/map_screen.png",
-        "in_battle": "templates/in_battle.png",
-        "victory": "templates/victory.png",
-        "defeat": "templates/defeat.png",
-        "node_yellow": "templates/node_yellow.png",
-        "node_red": "templates/node_red.png",
-        "node_blue": "templates/node_blue.png",
-        "node_green": "templates/node_green.png",
-        "node_purple": "templates/node_purple.png",
+        "next_level":       "templates/next_level.png",      # 下一关（最高优先）
+        "node_challenge":   "templates/node_challenge.png",  # 节点挑战状态
+        "shop_popup":       "templates/shop_popup.png",      # 商城弹窗状态
+        "event_select":     "templates/event_select.png",    # 事件选择状态
+        "captain_select":   "templates/captain_select.png",  # 队长选择状态
+        "equipment_select": "templates/equipment_select.png",# 装备选择状态
+        "map_screen":       "templates/map_screen.png",      # 地图界面
+        "in_battle":        "templates/in_battle.png",       # 战斗中界面
+        "victory":          "templates/victory.png",         # 胜利结算
+        "defeat":           "templates/defeat.png",          # 失败结算
+        # 节点颜色模板（多次匹配）
+        "node_yellow":      "templates/node_yellow.png",
+        "node_red":         "templates/node_red.png",
+        "node_blue":        "templates/node_blue.png",
+        "node_green":       "templates/node_green.png",
+        "node_purple":      "templates/node_purple.png",
     })
 
     # 固定点击坐标 [x, y]，基于 1280×720 窗口坐标系
     fixed_clicks: Dict[str, List[int]] = field(default_factory=lambda: {
-        "auto_fight": [640, 500],
-        "event_option0": [400, 550],
-        "event_option1": [640, 550],
-        "event_option2": [880, 550],
+        # 功能按钮坐标
+        "next_level":     [640, 400],    # 下一关按钮
+        "challenge_btn":  [640, 400],    # 挑战按钮（节点挑战时点击）
+        "shop_close":     [1200, 50],    # 商城关闭按钮
+        "battle_result":  [640, 500],    # 战斗结算确认（胜利/失败通用）
+        "captain_pos":    [640, 400],    # 队长选择位置
+        "equipment_pos":  [640, 400],    # 装备选择位置
+        # 事件选项（三选一）
+        "event_option0":  [400, 550],    # 事件选项左
+        "event_option1":  [640, 550],    # 事件选项中
+        "event_option2":  [880, 550],    # 事件选项右
+        # 已弃用（保留兼容性）
+        "auto_fight":     [640, 500],    # 自动战斗（已弃用，战斗不再点击）
     })
 
 
@@ -47,17 +64,14 @@ class Config:
 
     @property
     def base_dir(self) -> str:
-        """返回配置文件所在目录（作为模板等资源的基准路径）"""
         return os.path.dirname(os.path.abspath(self.config_file))
 
     def resolve_path(self, path: str) -> str:
-        """将相对路径转换为基于配置文件目录的绝对路径"""
         if os.path.isabs(path):
             return path
         return os.path.join(self.base_dir, path)
 
     def load(self) -> bool:
-        """从 JSON 文件加载配置，成功返回 True，文件不存在返回 False（使用默认值）"""
         if not os.path.exists(self.config_file):
             return False
         try:
@@ -70,10 +84,8 @@ class Config:
             return False
 
     def save(self) -> bool:
-        """将当前配置保存到 JSON 文件，成功返回 True"""
         try:
             raw = asdict(self.data)
-            # 确保目录存在
             dir_name = os.path.dirname(os.path.abspath(self.config_file))
             os.makedirs(dir_name, exist_ok=True)
             with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -84,19 +96,15 @@ class Config:
             return False
 
     def _apply_raw(self, raw: dict):
-        """将原始字典数据应用到 GameConfig"""
         for key, value in raw.items():
             if hasattr(self.data, key):
                 setattr(self.data, key, value)
 
     def to_dict(self) -> dict:
-        """导出为字典"""
         return asdict(self.data)
 
     def update_from_dict(self, raw: dict):
-        """从字典更新配置"""
         self._apply_raw(raw)
 
     def reset_to_defaults(self):
-        """重置为默认值"""
         self.data = GameConfig()

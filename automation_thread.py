@@ -259,8 +259,19 @@ class AutomationThread(QThread):
         """对所有模板批量执行匹配"""
         results = {}
 
+        # 界面状态检测模板（单次匹配，按优先级排序）
+        # 优先级：下一关 > 节点挑战 > 商城弹窗 > 事件选择 > 队长 > 装备 > 地图 > 战斗 > 结算
         single_match_templates = [
-            "map_screen", "in_battle", "victory", "defeat"
+            "next_level",        # 下一关（最高优先）
+            "node_challenge",    # 节点挑战状态
+            "shop_popup",        # 商城弹窗
+            "event_select",      # 事件选择
+            "captain_select",    # 队长选择
+            "equipment_select",  # 装备选择
+            "map_screen",        # 地图界面
+            "in_battle",         # 战斗中（不点击，只等结算）
+            "victory",           # 胜利结算
+            "defeat",            # 失败结算
         ]
         for name in single_match_templates:
             if self.matcher.is_loaded(name):
@@ -307,14 +318,19 @@ class AutomationThread(QThread):
             import ctypes
             from ctypes import wintypes
 
+            # 设置函数参数类型（避免自动类型推断失败）
             user32 = ctypes.windll.user32
-            hwnd = self._webview_hwnd
+            user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+            user32.SetCursorPos.argtypes = [ctypes.c_int, ctypes.c_int]
+            user32.mouse_event.argtypes = [ctypes.c_uint, ctypes.c_long, ctypes.c_long,
+                                            ctypes.c_uint, ctypes.c_ulong]
 
+            hwnd = self._webview_hwnd
             if hwnd == 0:
                 self._emit_log("Win32 点击失败：无效的窗口句柄")
                 return False
 
-            # 纯 Win32 API 获取窗口屏幕坐标
+            # 获取窗口屏幕坐标
             rect = wintypes.RECT()
             user32.GetWindowRect(hwnd, ctypes.byref(rect))
             abs_x = rect.left + x

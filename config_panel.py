@@ -25,15 +25,23 @@ class TemplatePathEditor(QWidget):
 
     # 英文名 → 中文显示名映射
     LABEL_MAP = {
-        "map_screen": "地图画面标识",
-        "in_battle": "战斗界面标识",
-        "victory": "胜利结算图标",
-        "defeat": "失败结算图标",
-        "node_yellow": "黄色节点图标",
-        "node_red": "红色节点图标",
-        "node_blue": "蓝色节点图标",
-        "node_green": "绿色节点图标",
-        "node_purple": "紫色节点图标",
+        # 界面状态模板（按优先级）
+        "next_level":       "下一关图标",
+        "node_challenge":   "节点挑战状态",
+        "shop_popup":       "商城弹窗状态",
+        "event_select":     "事件选择状态",
+        "captain_select":   "队长选择状态",
+        "equipment_select": "装备选择状态",
+        "map_screen":       "地图画面标识",
+        "in_battle":        "战斗界面标识",
+        "victory":          "胜利结算图标",
+        "defeat":           "失败结算图标",
+        # 节点颜色模板
+        "node_yellow":      "黄色节点图标",
+        "node_red":         "红色节点图标",
+        "node_blue":        "蓝色节点图标",
+        "node_green":       "绿色节点图标",
+        "node_purple":      "紫色节点图标",
     }
 
     path_changed = pyqtSignal(str, str)  # template_name, new_path
@@ -109,17 +117,29 @@ class CoordinateEditor(QWidget):
 
     # 坐标名称 → 中文标签映射
     LABEL_MAP = {
-        "auto_fight": "自动战斗按钮",
-        "event_option0": "事件选项 (左)",
-        "event_option1": "事件选项 (中)",
-        "event_option2": "事件选项 (右)",
+        "next_level":     "下一关按钮",
+        "challenge_btn":  "挑战按钮",
+        "shop_close":     "关闭商城按钮",
+        "battle_result":  "战斗结算确认",
+        "captain_pos":    "队长选择位置",
+        "equipment_pos":  "装备选择位置",
+        "event_option0":  "事件选项 (左)",
+        "event_option1":  "事件选项 (中)",
+        "event_option2":  "事件选项 (右)",
+        "auto_fight":     "自动战斗(弃用)",
     }
 
     DEFAULT_COORDS = {
-        "auto_fight": [640, 500],
-        "event_option0": [400, 550],
-        "event_option1": [640, 550],
-        "event_option2": [880, 550],
+        "next_level":     [640, 400],
+        "challenge_btn":  [640, 400],
+        "shop_close":     [1200, 50],
+        "battle_result":  [640, 500],
+        "captain_pos":    [640, 400],
+        "equipment_pos":  [640, 400],
+        "event_option0":  [400, 550],
+        "event_option1":  [640, 550],
+        "event_option2":  [880, 550],
+        "auto_fight":     [640, 500],
     }
 
     def __init__(self, parent=None):
@@ -333,15 +353,21 @@ class ConfigPanel(QWidget):
         # Tab 2: 模板路径
         self.template_editor = TemplatePathEditor(
             templates={
-                "map_screen": "templates/map_screen.png",
-                "in_battle": "templates/in_battle.png",
-                "victory": "templates/victory.png",
-                "defeat": "templates/defeat.png",
-                "node_yellow": "templates/node_yellow.png",
-                "node_red": "templates/node_red.png",
-                "node_blue": "templates/node_blue.png",
-                "node_green": "templates/node_green.png",
-                "node_purple": "templates/node_purple.png",
+                "next_level":       "templates/next_level.png",
+                "node_challenge":   "templates/node_challenge.png",
+                "shop_popup":       "templates/shop_popup.png",
+                "event_select":     "templates/event_select.png",
+                "captain_select":   "templates/captain_select.png",
+                "equipment_select": "templates/equipment_select.png",
+                "map_screen":       "templates/map_screen.png",
+                "in_battle":        "templates/in_battle.png",
+                "victory":          "templates/victory.png",
+                "defeat":           "templates/defeat.png",
+                "node_yellow":      "templates/node_yellow.png",
+                "node_red":         "templates/node_red.png",
+                "node_blue":        "templates/node_blue.png",
+                "node_green":       "templates/node_green.png",
+                "node_purple":      "templates/node_purple.png",
             }
         )
         scroll_templates = QScrollArea()

@@ -1,0 +1,63 @@
+[启动] 将自动加载: https://www.wanyiwan.top/game/xjjdcj
+[加载] https://www.wanyiwan.top/game/xjjdcj
+[页面] 加载完成: https://www.wanyiwan.top/game/xjjdcj
+[主窗口] 自动化线程已启动
+[00:47:40] 状态机已重置
+[00:47:40] 状态: 空闲 → 检测地图
+[00:47:40] === 自动化已启动 ===
+Canvas 缩放比: 使用默认值 1.0 (1280x720 固定窗口)
+[诊断] 已匹配: [map_screen](98%), [node_yellow](77%), [node_red](80%), [node_blue](75%), [node_purple](88%) | 未匹配: in_battle, victory, defeat, node_green
+[00:47:42] === 第 1 轮循环 ===
+[00:47:42] 状态: 检测地图 → 在地图上
+[00:47:42] 点击 [node_yellow] 节点 (303,436) 置信度=74%
+点击: 屏幕(303,436)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[动作] 点击 [node_yellow] 节点 (303,436) 置信度=74%
+[00:47:43] 点击 [node_yellow] 节点 (303,531) 置信度=73%
+点击: 屏幕(303,531)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:45] 点击 [node_red] 节点 (492,342) 置信度=80%
+点击: 屏幕(492,342)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:47] 点击 [node_red] 节点 (492,437) 置信度=79%
+点击: 屏幕(492,437)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:48] 点击 [node_blue] 节点 (493,151) 置信度=75%
+点击: 屏幕(493,151)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:50] 点击 [node_blue] 节点 (493,246) 置信度=72%
+点击: 屏幕(493,246)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:52] 点击 [node_purple] 节点 (1061,340) 置信度=88%
+点击: 屏幕(1061,340)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:54] 点击 [node_yellow] 节点 (493,531) 置信度=73%
+点击: 屏幕(493,531)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:56] 点击 [node_blue] 节点 (682,151) 置信度=72%
+点击: 屏幕(682,151)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[00:47:57] 点击 [node_red] 节点 (682,247) 置信度=80%
+点击: 屏幕(682,247)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[诊断] 已匹配: [map_screen](98%), [node_yellow](77%), [node_red](80%), [node_blue](75%), [node_purple](88%) | 未匹配: in_battle, victory, defeat, node_green
+[00:47:59] 点击 [node_red] 节点 (682,437) 置信度=79%
+点击: 屏幕(682,437)
+Win32 点击异常: argument 1: TypeError: Don't know how to convert parameter 1
+JS 点击注入已禁用（避免跨线程问题），请确保 Win32 API 可用
+[动作] 点击 [node_red] 节点 (682,437) 置信度=79%
+[00:47:59] 状态: 在地图上 → 已暂停
+[00:47:59] === 自动化已暂停 ===
+[00:48:00] 状态: 已暂停 → 已停止
+[00:48:00] === 自动化已停止 ===
+=== 自动化线程已结束 ===
