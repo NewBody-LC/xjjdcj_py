@@ -4,20 +4,46 @@
     "click_interval": 0.5,
     "max_loops": 10,
     "templates": {
+        "captain_select": "templates\\dzxz.png",
         "defeat": "templates\\sbjs.png",
+        "equipment_select": "templates\\equipment_select.png",
+        "event_select": "templates\\普通事件.png",
         "in_battle": "templates\\zdjmbs.png",
         "map_screen": "templates\\dtbs.png",
+        "next_level": "templates\\nextLev.png",
         "node_blue": "templates\\blue.png",
+        "node_challenge": "templates\\challenge.png",
         "node_green": "templates\\green.png",
         "node_purple": "templates\\purple.png",
         "node_red": "templates\\red.png",
         "node_yellow": "templates\\yellow.png",
+        "shop_popup": "templates\\冒险活动.png",
         "victory": "templates\\victory.png"
     },
     "fixed_clicks": {
-        "auto_fight": [
-            615,
-            470
+        "next_level": [
+            1091,
+            249
+        ],
+        "challenge_btn": [
+            624,
+            473
+        ],
+        "shop_close": [
+            1200,
+            50
+        ],
+        "battle_result": [
+            646,
+            599
+        ],
+        "captain_pos": [
+            640,
+            400
+        ],
+        "equipment_pos": [
+            640,
+            400
         ],
         "event_option0": [
             400,
@@ -30,6 +56,10 @@
         "event_option2": [
             880,
             550
+        ],
+        "auto_fight": [
+            615,
+            470
         ]
     }
 }

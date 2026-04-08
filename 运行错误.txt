@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "F:\code\xjjdcj_v2_cbc\main.py", line 53, in <module>
+    sys.exit(main() or 0)
+             ~~~~^^
+  File "F:\code\xjjdcj_v2_cbc\main.py", line 35, in main
+    from PyQt5.QtWebEngineWidgets import QWebEngineView  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'PyQt5.QtWebEngineWidgets'
